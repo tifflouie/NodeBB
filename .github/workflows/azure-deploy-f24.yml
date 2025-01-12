@@ -38,7 +38,7 @@ jobs:
             "admin:username": "admin",
             "admin:password": "${{ secrets.ADMIN_PASSWORD }}",
             "admin:password:confirm": "${{ secrets.ADMIN_PASSWORD }}",
-            "admin:email": "rohanpadhye@cmu.edu",
+            "admin:email": "mhilton@cmu.edu",
             "database": "redis",
             "redis:host": "${{ secrets.REDIS_HOST }}",
             "redis:port": "6379",
@@ -50,5 +50,5 @@ jobs:
         with:
           app-name: 'NodeBB-Spring25'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_31EB2168477148F0AB898F8A06F5354B }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_21969E1D74744206A7839939758EB8FA }}
           package: .
