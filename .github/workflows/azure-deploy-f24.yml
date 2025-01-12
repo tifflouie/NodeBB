@@ -48,7 +48,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'NodeBB-Spring25'
+          app-name: '313-NodeBB-Spring25'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_21969E1D74744206A7839939758EB8FA }}
           package: .
