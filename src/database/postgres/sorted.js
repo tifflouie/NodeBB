@@ -1,5 +1,7 @@
 'use strict';
 
+// const { create } = require('lodash');
+
 // const { parse } = require('path');
 
 module.exports = function (module) {
@@ -695,39 +697,29 @@ SELECT z."value",
 		const sort = options.reverse ? 'DESC' : 'ASC';
 		const min = parseBoundary(options.min, '-inf');
 		const max = parseBoundary(options.max, '+inf');
-		const cursor = client.query(new Cursor(`
-SELECT z."value", z."score"
-  FROM "legacy_object_live" o
- INNER JOIN "legacy_zset" z
-         ON o."_key" = z."_key"
-        AND o."type" = z."type"
- WHERE o."_key" = $1::TEXT
-   AND (z."score" >= $2::NUMERIC OR $2::NUMERIC IS NULL)
-   AND (z."score" <= $3::NUMERIC OR $3::NUMERIC IS NULL)
- ORDER BY z."score" ${sort}, z."value" ${sort}`, [setKey, min, max]));
+		const cursor = createCursor(client, setKey, sort, min, max);
 
-		if (process && process.constructor && process.constructor.name !== 'AsyncFunction') {
+		if (isAsyncFunction(process)) {
 			process = util.promisify(process);
 		}
+
 		let iteration = 1;
+
 		while (true) {
 			/* eslint-disable no-await-in-loop */
-			let rows = await cursor.readAsync(batchSize);
+			const rows = await cursor.readAsync(batchSize);
 			if (!rows.length) {
 				client.release();
 				return;
 			}
 
-			if (options.withScores) {
-				rows = rows.map(r => ({ value: r.value, score: parseFloat(r.score) }));
-			} else {
-				rows = rows.map(r => r.value);
-			}
+			const processedRows = processRows(rows, options.withScores);
+
 			try {
 				if (iteration > 1 && options.interval) {
 					await sleep(options.interval);
 				}
-				await process(rows);
+				await process(processedRows);
 				iteration += 1;
 			} catch (err) {
 				await client.release();
@@ -738,5 +730,30 @@ SELECT z."value", z."score"
 
 	function parseBoundary(value, compared_to_value) {
 		return value && value !== compared_to_value ? value : null;
+	}
+
+	function createCursor(client, setKey, sort, min, max) {
+		return client.query(new Cursor(`
+			SELECT z."value", z."score"
+			  FROM "legacy_object_live" o
+			 INNER JOIN "legacy_zset" z
+					 ON o."_key" = z."_key"
+					AND o."type" = z."type"
+			 WHERE o."_key" = $1::TEXT
+			   AND (z."score" >= $2::NUMERIC OR $2::NUMERIC IS NULL)
+			   AND (z."score" <= $3::NUMERIC OR $3::NUMERIC IS NULL)
+			 ORDER BY z."score" ${sort}, z."value" ${sort}`, [setKey, min, max]));
+	}
+
+	function isAsyncFunction(process) {
+		return process && process.constructor && process.constructor.name !== 'AsyncFunction';
+	}
+
+	function processRows(rows, with_scores) {
+		if (with_scores) {
+			rows = rows.map(r => ({ value: r.value, score: parseFloat(r.score) }));
+		} else {
+			rows = rows.map(r => r.value);
+		}
 	}
 };
