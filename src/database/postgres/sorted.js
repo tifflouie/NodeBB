@@ -691,6 +691,7 @@ SELECT z."value",
 		return res.rows.map(r => ({ value: r.value, score: parseFloat(r.score) }));
 	};
 
+	console.log('Tiffany Louie');
 	module.processSortedSet = async function (setKey, process, options) {
 		const client = await module.pool.connect();
 		const batchSize = (options || {}).batch || 100;
