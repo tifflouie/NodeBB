@@ -1,5 +1,7 @@
 'use strict';
 
+const { parse } = require('path');
+
 module.exports = function (module) {
 	const helpers = require('./helpers');
 	const util = require('util');
@@ -691,8 +693,8 @@ SELECT z."value",
 		const client = await module.pool.connect();
 		const batchSize = (options || {}).batch || 100;
 		const sort = options.reverse ? 'DESC' : 'ASC';
-		const min = options.min && options.min !== '-inf' ? options.min : null;
-		const max = options.max && options.max !== '+inf' ? options.max : null;
+		const min = parseBoundary(options.min, '-inf');
+		const max = parseBoundary(options.max, '+inf');
 		const cursor = client.query(new Cursor(`
 SELECT z."value", z."score"
   FROM "legacy_object_live" o
@@ -733,4 +735,8 @@ SELECT z."value", z."score"
 			}
 		}
 	};
+
+	function parseBoundary(value, compared_to_value) {
+		return value && value !== compared_to_value ? value : null;
+	}
 };
