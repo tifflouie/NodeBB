@@ -1,6 +1,6 @@
 'use strict';
 
-const { parse } = require('path');
+// const { parse } = require('path');
 
 module.exports = function (module) {
 	const helpers = require('./helpers');
